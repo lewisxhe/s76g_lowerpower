@@ -244,6 +244,13 @@ bool setupOLED(void)
 #define LED_BUILTIN     PA3
 #endif
 
+void repetitionsIncrease()
+{
+    // This function will be called once on device wakeup
+    // You can do some little operations here (like changing variables which will be used in the loop)
+    // Remember to avoid calling delay() and long running functions since this functions executes in interrupt context
+}
+
 
 void setup()
 {
@@ -252,6 +259,9 @@ void setup()
     Serial.begin(9600);
 
     LowPower.begin();
+
+    LowPower.attachInterruptWakeup(TTP223_TP_PIN, repetitionsIncrease, RISING);
+
     Serial.println("LowPower.begin()");
     setupOLED();
     setupLoRa();
@@ -279,12 +289,14 @@ void setup()
     Serial.println("powerSave .");
     delay(500);
     Serial.end();
+
+    /*Low power processing*/
     powerSave();
 }
 
 void loop()
 {
-    LowPower.deepSleep(10000);
+    LowPower.deepSleep();
     pinMode(LED_BUILTIN, OUTPUT);
     Serial.setRx(UART_RX);
     Serial.setTx(UART_TX);
