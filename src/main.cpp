@@ -1,6 +1,6 @@
 /*
 *   S76G Wristband full function test firmware ,
-*   Sleep power consumption is as low as about 0.7uA
+*   Sleep power consumption is as low as about 0.7mA
 *   Written on December 12, 24 Created by Lewis he
 * */
 /*************************************************
