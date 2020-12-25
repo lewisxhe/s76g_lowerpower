@@ -27,7 +27,7 @@
 #endif
 
 HardwareSerial  SerialGPS(GPS_RX, GPS_TX);
-U8G2_SSD1306_64X32_1F_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ PA8);
+U8G2_SSD1306_64X32_1F_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ OLED_RESET);
 ICM_20948_I2C imu;
 TinyGPSPlus      gps;
 bool                 sleepIn = false;
@@ -38,6 +38,7 @@ uint32_t            blinkMillis = 0;
 
 bool touched();
 void showIMUInfo(const char *prefix, float x, float y, float z);
+void showGPSInfo();
 void loopGPS();
 void loopMag();
 void loopAccel();
@@ -69,7 +70,7 @@ void setRadioDirection(bool rx)
     digitalWrite(RADIO_ANT_SWITCH_RXTX, rx ? HIGH : LOW);
 }
 
-#define REG_LR_TCXO                                     0x4B
+#define REG_LR_TCXO                     0x4B
 #define RFLR_TCXO_TCXOINPUT_MASK        0xEF
 #define RFLR_TCXO_TCXOINPUT_ON          0x10
 #define RFLR_TCXO_TCXOINPUT_OFF         0x00  // Default
@@ -94,7 +95,6 @@ bool setupLoRa(void)
     pinMode(PC1, INPUT);
     digitalWrite(PC1, HIGH);
     if ( digitalRead(PC1) == 0 ) {
-        Serial.println("PC1");
         uint8_t tcxo =  LoRa.readRegister( REG_LR_TCXO ) & RFLR_TCXO_TCXOINPUT_MASK;
         LoRa.writeRegister(REG_LR_TCXO, tcxo | RFLR_TCXO_TCXOINPUT_OFF);
 
@@ -208,9 +208,8 @@ void loopGPS()
     }
 
     if (gps.location.isUpdated()) {
-        //TODO:
 
-        // showGPSInfo();
+        showGPSInfo();
         Serial.print(F("LOCATION   Fix Age="));
         Serial.print(gps.location.age());
         Serial.print(F("ms Raw Lat="));
@@ -442,26 +441,21 @@ void setupGPS()
 
 void showGPSInfo()
 {
-    double lat = 114.2210;
-    double lng = 22.668;
-    int satellite = 4;
-    // int fix = 3;
-
     u8g2.clearBuffer();
     u8g2.setFontMode(1);
     // u8g2.setFont(u8g2_font_crox2t_tf);
     u8g2.setFont(u8g2_font_6x10_tf);
     u8g2.setCursor(0, 8);
     u8g2.print("lat:");
-    u8g2.print(lat);
+    u8g2.print(gps.location.lat());
     u8g2.setCursor(0, 20);
     u8g2.print("lng:");
-    u8g2.print(lng);
+    u8g2.print(gps.location.lng());
     u8g2.setCursor(0, 32);
     u8g2.print("sate:");
-    u8g2.print(satellite);
+    u8g2.print(gps.satellites.value());
     u8g2.setCursor(45, 32);
-    u8g2.print("3D");
+    u8g2.print(gps.sentencesWithFix() ? "2D" : "3D");
     u8g2.sendBuffer();
 }
 
@@ -757,8 +751,17 @@ void boardInit()
     pinMode(TTP223_VDD_PIN, OUTPUT);
     pinMode(TTP223_TP_PIN, INPUT);
 
+    pinMode(OLED_RESET, OUTPUT);
+    digitalWrite(OLED_RESET, HIGH);
+    delay(80);
+    digitalWrite(OLED_RESET, LOW);
+    delay(10);
+    digitalWrite(OLED_RESET, HIGH);
+
+#ifndef USBCON
     Serial.setRx(UART_RX);
     Serial.setTx(UART_TX);
+#endif
     Serial.begin(9600);
 
     Wire.setSCL(I2C_SCL);

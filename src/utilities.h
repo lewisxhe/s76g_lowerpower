@@ -42,7 +42,7 @@
 #define IND_LED                                     PA5
 #define I2C_SCL                                     PB6
 #define I2C_SDA                                     PB7
-
+#define OLED_RESET                                  PA8
 
 #define ICM20948_INT                                PA2//PB0
 
